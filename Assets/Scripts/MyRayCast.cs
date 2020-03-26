@@ -7,18 +7,13 @@ using System.IO;
 public class MyRayCast : MonoBehaviour
 {
     public Camera cam;
-
     public Vector2 myRes = new Vector2(800, 800);
 
-    public bool printInfo = true;
+    public List<Light> lights = new List<Light>();
 
     public bool showRayFromCam = false;
 
     public bool bakeToImage = false;
-    public bool showHit = false;
-    public bool clearHit = false;
-    private List<Vector3> hitPoint = new List<Vector3>();
-
     public bool save = false;
 
     private bool rayFinished = false;
@@ -28,16 +23,6 @@ public class MyRayCast : MonoBehaviour
     {
         if (cam)
         {
-            if (clearHit)
-            {
-                hitPoint.Clear();
-                clearHit = false;
-            }
-            if (printInfo)
-            {
-                print("eye pos : " + cam.transform.position);
-                print("near plane : " + cam.nearClipPlane);
-            }
             if (bakeToImage)
             {
                 print("Start");
@@ -45,44 +30,26 @@ public class MyRayCast : MonoBehaviour
                 bakeToImage = false;
                 rayTex = new Texture2D((int)myRes.x, (int)myRes.y);
 
-                RaycastHit hit;
-
                 Matrix4x4 c2w = cam.cameraToWorldMatrix;
                 float imgAspect = myRes.x / myRes.y;
                 float tanAlpha = Mathf.Tan(cam.fieldOfView / 2 * Mathf.PI / 180.0f);
                 Vector3 eyePos = cam.transform.position;
                 for (int i = 0; i < myRes.x; i++)
                 {
+                    // screen x
                     float rx = (((i + 0.5f) / myRes.x) * 2 - 1) * tanAlpha * imgAspect;
                     for (int j = 0; j < myRes.y; j++)
                     {
+                        // screen x
                         float ry = -1 * (((j + 0.5f) / myRes.y) * 2 - 1) * tanAlpha;
+                        // ray direction
+                        // camera to world
                         Vector3 rd = c2w.MultiplyVector(new Vector3(rx, ry, -1));
 
-                        if (Physics.Raycast(eyePos, rd, out hit, 1000.0f))
-                        {
-                            hitPoint.Add(hit.point);
-                            // get color from hit point
-                            Material tmpMat = hit.transform.GetComponent<Renderer>().sharedMaterial;
-                            Color color = Color.white;
-                            Texture2D texture2D = tmpMat.mainTexture as Texture2D;
-                            //print(hit.textureCoord);
-                            if (texture2D)
-                            {
-                                Vector2 pCoord = hit.textureCoord;
-                                pCoord.x *= texture2D.width;
-                                pCoord.y *= texture2D.height;
-
-                                Vector2 tiling = tmpMat.mainTextureScale;
-                                color = texture2D.GetPixel(Mathf.FloorToInt(pCoord.x * tiling.x), Mathf.FloorToInt(pCoord.y * tiling.y));
-                            }
-                            else
-                            {
-                                color = tmpMat.color;
-                            }
-                            rayTex.SetPixel(i, j, color);
-                            rayTex.Apply();
-                        }
+                        // ray color
+                        Color color = ColorFromRay(eyePos ,rd, iterationCount);
+                        rayTex.SetPixel(i, j, color);
+                        rayTex.Apply();
                     }
                 }
 
@@ -94,6 +61,71 @@ public class MyRayCast : MonoBehaviour
                 SaveTexture();
             }
         }   
+    }
+
+    static public int iterationCount = 5;
+    static Color RayToLight(Vector3 hitObjectPos, Vector3 lightPos)
+    {
+        RaycastHit hit;
+        Vector3 hitToLight = (lightPos - hitObjectPos).normalized;
+        if (Physics.Raycast(hitObjectPos, hitToLight, out hit, 1000.0f))
+        {
+            if ((lightPos - hit.point).magnitude < 1e-5)
+                return Color.white;
+        }
+        return Color.black;
+    }
+    /*static*/ Color ColorFromRay(Vector3 eyePos, Vector3 rayDirection, int iterCount)
+    {
+        // should be ambient light?
+        Color color = Color.black;
+        if (iterCount-- == 0)
+            return color;
+        RaycastHit hit;
+        if (Physics.Raycast(eyePos, rayDirection, out hit, 1000.0f))
+        {
+            // test
+            // original obj color on hit point
+            bool getHitColor = false;
+            Color hitColor = Color.black;
+            //return color;
+            // shadow ray
+            // hit point ray to every light
+            foreach (Light light in lights)
+            {
+                // light.transform.position
+                Color lightColor = light.color * RayToLight(hit.point, light.transform.position);
+                if (lightColor != Color.black)
+                {
+                    if (!getHitColor)
+                    {
+                        hitColor = ColorFromHitPoint.ColorFromHit(hit);
+                    }
+                    color += lightColor * hitColor;
+                }
+            }
+            // if hit object is mirror
+            bool mirror = false;
+            if (mirror)
+            {
+                // 鏡子
+                int newIter = iterationCount;
+                Color mirrorColor = Color.white;
+                Vector3 reflectRayDirection = RotationFromNormal.VectorRotateAroundAxis(-rayDirection, hit.normal, 180);
+                color += mirrorColor * ColorFromRay(hit.point, reflectRayDirection, iterCount);
+            }
+            // if hit object is transparent
+            bool transparent = false;
+            if (transparent)
+            {
+                // 透明
+                Color transColor = Color.white;
+                // 需計算折射ray方向
+                Vector3 refractRayDirection = rayDirection;
+                color += transColor * ColorFromRay(hit.point, refractRayDirection, iterCount);
+            }
+        }
+        return color;
     }
 
     public void SaveTexture()
@@ -145,15 +177,6 @@ public class MyRayCast : MonoBehaviour
                 {
                     Vector3 rayTo = eyePos + rd;
                     Gizmos.DrawLine(eyePos, rayTo);
-                }
-            }
-            if (showHit)
-            {
-                Gizmos.color = Color.red;
-                Vector3 eyePos = cam.transform.position;
-                foreach (Vector3 hp in hitPoint)
-                {
-                    Gizmos.DrawLine(eyePos, hp);
                 }
             }
         }
