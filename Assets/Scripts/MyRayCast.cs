@@ -70,10 +70,11 @@ public class MyRayCast : MonoBehaviour
         Vector3 hitToLight = (lightPos - hitObjectPos).normalized;
         if (Physics.Raycast(hitObjectPos, hitToLight, out hit, 1000.0f))
         {
-            if ((lightPos - hit.point).magnitude < 1e-5)
+            if ((lightPos - hit.point).magnitude > 1e-5)
                 return Color.white;
+            return Color.black;
         }
-        return Color.black;
+        return Color.white;
     }
     /*static*/ Color ColorFromRay(Vector3 eyePos, Vector3 rayDirection, int iterCount)
     {
@@ -100,6 +101,7 @@ public class MyRayCast : MonoBehaviour
                     if (!getHitColor)
                     {
                         hitColor = ColorFromHitPoint.ColorFromHit(hit);
+                        getHitColor = true;
                     }
                     color += lightColor * hitColor;
                 }

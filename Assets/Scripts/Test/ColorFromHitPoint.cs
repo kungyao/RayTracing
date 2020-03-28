@@ -62,41 +62,58 @@ public class ColorFromHitPoint : MonoBehaviour
         Color color = Color.black;
         if (mesh)
         {
-            int[] hittedTriangle = new int[]
-{
+            if (mesh.subMeshCount > 1)
+            {
+                int[] hittedTriangle = new int[]
+    {
                 mesh.triangles[hit.triangleIndex * 3],
                 mesh.triangles[hit.triangleIndex * 3 + 1],
                 mesh.triangles[hit.triangleIndex * 3 + 2]
-};
-            bool findSub = false;
-            for (int i = 0; i < mesh.subMeshCount; i++)
-            {
-                int[] subMeshTris = mesh.GetTriangles(i);
-                for (int j = 0; j < subMeshTris.Length; j += 3)
+    };
+                bool findSub = false;
+                for (int i = 0; i < mesh.subMeshCount; i++)
                 {
-                    if (subMeshTris[j] == hittedTriangle[0] &&
-                        subMeshTris[j + 1] == hittedTriangle[1] &&
-                        subMeshTris[j + 2] == hittedTriangle[2])
+                    int[] subMeshTris = mesh.GetTriangles(i);
+                    for (int j = 0; j < subMeshTris.Length; j += 3)
                     {
-                        findSub = true;
-                        Material mat = hit.transform.GetComponent<Renderer>().sharedMaterials[i];
-                        Texture2D tex = mat.mainTexture as Texture2D;
-
-                        color = mat.color;
-                        if (tex)
+                        if (subMeshTris[j] == hittedTriangle[0] &&
+                            subMeshTris[j + 1] == hittedTriangle[1] &&
+                            subMeshTris[j + 2] == hittedTriangle[2])
                         {
-                            Vector2 pCoord = hit.textureCoord;
-                            pCoord.x *= tex.width;
-                            pCoord.y *= tex.height;
-                            Vector2 tiling = mat.mainTextureScale;
-                            color = tex.GetPixel(Mathf.FloorToInt(pCoord.x * tiling.x), Mathf.FloorToInt(pCoord.y * tiling.y));
+                            findSub = true;
+                            Material mat = hit.transform.GetComponent<Renderer>().sharedMaterials[i];
+                            Texture2D tex = mat.mainTexture as Texture2D;
+
+                            color = mat.color;
+                            if (tex)
+                            {
+                                Vector2 pCoord = hit.textureCoord;
+                                pCoord.x *= tex.width;
+                                pCoord.y *= tex.height;
+                                Vector2 tiling = mat.mainTextureScale;
+                                color *= tex.GetPixel(Mathf.FloorToInt(pCoord.x * tiling.x), Mathf.FloorToInt(pCoord.y * tiling.y));
+                            }
+                            //print(color);
+                            //Debug.Log(string.Format("triangle index:{0} submesh index:{1} submesh triangle index:{2}", hit.triangleIndex, i, j / 3));
                         }
-                        //print(color);
-                        //Debug.Log(string.Format("triangle index:{0} submesh index:{1} submesh triangle index:{2}", hit.triangleIndex, i, j / 3));
                     }
+                    if (findSub)
+                        break;
                 }
-                if (findSub)
-                    break;
+            }
+            else
+            {
+                Material mat = hit.transform.GetComponent<Renderer>().material;
+                Texture2D tex = mat.mainTexture as Texture2D;
+                color = mat.color;
+                if (tex)
+                {
+                    Vector2 pCoord = hit.textureCoord;
+                    pCoord.x *= tex.width;
+                    pCoord.y *= tex.height;
+                    Vector2 tiling = mat.mainTextureScale;
+                    color *= tex.GetPixel(Mathf.FloorToInt(pCoord.x * tiling.x), Mathf.FloorToInt(pCoord.y * tiling.y));
+                }
             }
         }
         return color;
