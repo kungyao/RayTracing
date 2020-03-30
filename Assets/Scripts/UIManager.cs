@@ -13,7 +13,7 @@ public class UIManager : MonoBehaviour
     [HideInInspector]
     public string _cpbrtFilePath;       //cpbrtfile
 
-    private Parser _parser;
+    public Parser _parser;
 
     public GameManager gm;
 
@@ -44,6 +44,8 @@ public class UIManager : MonoBehaviour
 
     public void StartRender()
     {
+        print("Start");
         gm.StartRender(_parser);
+        print("Finish");
     }
 }

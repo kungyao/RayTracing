@@ -65,14 +65,16 @@
     <Compile Include="Assets\Scripts\MyRayCast.cs" />
     <Compile Include="Assets\Scripts\ObjLoader\Demo.cs" />
     <Compile Include="Assets\Scripts\ObjLoader\FileReader.cs" />
+    <Compile Include="Assets\Scripts\ObjLoader\MaterialAttribute.cs" />
     <Compile Include="Assets\Scripts\ObjLoader\ObjectLoader.cs" />
+    <Compile Include="Assets\Scripts\ObjLoader\OutputInfo.cs" />
+    <Compile Include="Assets\Scripts\ObjLoader\RayTracingObject.cs" />
     <Compile Include="Assets\Scripts\Parser.cs" />
     <Compile Include="Assets\Scripts\Test.cs" />
     <Compile Include="Assets\Scripts\Test\ColorFromHitPoint.cs" />
     <Compile Include="Assets\Scripts\Test\RotationFromNormal.cs" />
     <Compile Include="Assets\Scripts\TextureHelper.cs" />
     <Compile Include="Assets\Scripts\UIManager.cs" />
-    <None Include="Assets\PbrtScene\pbrt-exe\使用說明.txt" />
     <None Include="Assets\PbrtScene\sibenik\copyright.txt" />
     <None Include="Assets\PbrtScene\scene\sibenik\copyright.txt" />
     <Reference Include="Unity.TextMeshPro.Editor">

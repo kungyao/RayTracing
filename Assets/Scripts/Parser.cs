@@ -1,36 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
 using System.IO;
-
-public class OutputInfo
-{
-    public Vector2 Resolution { get; set; }
-    public string ImageName { get; set; }
-    public string Sort { get; set; }
-
-    public OutputInfo()
-    {
-        Resolution = Vector2.zero;
-        ImageName = "";
-        Sort = "";
-    }
-
-    public OutputInfo(Vector2 _resolution, string _imageName, string _sort)
-    {
-        Resolution = _resolution;
-        ImageName = _imageName;
-        Sort = _sort;
-    }
-    
-    public void Init()
-    {
-        Resolution = Vector2.zero;
-        ImageName = "";
-        Sort = "";
-    }
-}
 
 public enum ObjectType
 {
@@ -44,72 +15,7 @@ public enum LightType
 
 public enum MaterialType
 {
-    none, mirror, map, kdks
-}
-
-public class MaterialAttribute
-{
-    public Vector3 kd;
-    public Vector3 ks;
-
-    //for color, bump map
-    public string cmapName;
-    public string bmapName;
-
-    //for mesh
-    public string meshName;
-
-    public MaterialAttribute()
-    {
-        kd = Vector3.zero;
-        ks = Vector3.zero;
-        cmapName = "";
-        bmapName = "";
-        meshName = "";
-    }
-}
-
-public class RayTracingObject
-{
-    public ObjectType o_type = ObjectType.none;
-    public LightType l_type = LightType.none;
-
-    public MaterialType m_type = MaterialType.none;
-
-    public Vector3 pos;
-    public Vector3 rot;
-    public Vector3 scale;
-
-    // width, height, radius
-    public Vector3 whrInfo;
-
-    //for cylinder ymin, ymax
-    public Vector2 yminmax;
-
-    // for material attribute
-    public MaterialAttribute mattr;
-
-    //for light
-    public Vector3 lightColor;
-
-    //for area
-    public int nsample;
-
-    public RayTracingObject()
-    {
-        o_type = ObjectType.none;
-        l_type = LightType.none;
-        m_type = MaterialType.none;
-        pos = Vector3.zero;
-        rot = Vector3.zero;
-        scale = Vector3.one;
-        whrInfo = Vector3.zero;
-        yminmax = Vector2.zero;
-        mattr = new MaterialAttribute();
-        lightColor = Vector3.zero;
-        nsample = 0;
-    }
-
+    none, mirror, map, kdks, transparent
 }
 
 public class RayTracingInfo
@@ -384,6 +290,11 @@ public class Parser
                             robj.m_type = MaterialType.mirror;
                             j++;
                         }
+                        else if (tokens[j + 1] == "\"transparent\"") 
+                        {
+                            robj.m_type = MaterialType.transparent;
+                            j++; 
+                        }
                     }
                     else if (token == "\"colormap\"")
                     {
@@ -445,7 +356,7 @@ public class Parser
                     }
                     else if (token == "\"colorL\"")
                         robj.lightColor = new Vector3(float.Parse(ExtractString(tokens[++j])), float.Parse(tokens[++j])
-                            , float.Parse(ExtractString(tokens[++j])));
+                            , float.Parse(ExtractString(tokens[++j]))) / 15;
                     else if (token == "\"pointfrom\"")
                         robj.pos = new Vector3(float.Parse(ExtractString(tokens[++j])), float.Parse(tokens[++j])
                             , float.Parse(ExtractString(tokens[++j])));
